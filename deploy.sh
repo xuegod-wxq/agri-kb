@@ -12,6 +12,12 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_USER="${APP_USER:-root}"
 PORT="${PORT:-8001}"
+PYTHON="${PYTHON:-python3}"
+# 默认不指定索引：云服务器通常已在 /etc/pip.conf 配好内网镜像
+# （如阿里云 ECS 的 mirrors.cloud.aliyuncs.com，免流量费且更快）。
+# 显式传 -i 会覆盖系统配置，反而可能连不上——所以默认留空。
+# 需要指定时：sudo PIP_INDEX=http://你的源/simple bash deploy.sh
+PIP_INDEX="${PIP_INDEX:-}"
 SKIP_DEPS=0
 
 for arg in "$@"; do
@@ -28,6 +34,44 @@ fi
 
 echo ">>> 应用目录：$APP_DIR"
 echo ">>> 监听端口：$PORT"
+
+# ---------------------------------------------------------------- Python 版本
+# 必须先查这个：Python 3.6 上 pip 会报 "from versions: none"，
+# 因为新版 fastapi 全部要求 Python >= 3.7，版本会被静默过滤掉。
+if ! command -v "$PYTHON" >/dev/null 2>&1; then
+    echo "!!! 找不到 $PYTHON，请先安装 Python 3.8+"
+    exit 1
+fi
+PY_VER="$("$PYTHON" -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])')"
+PY_OK="$("$PYTHON" -c 'import sys; print(1 if sys.version_info >= (3, 8) else 0)')"
+PY_GOOD="$("$PYTHON" -c 'import sys; print(1 if sys.version_info >= (3, 10) else 0)')"
+echo ">>> Python 版本：$PY_VER ($PYTHON)"
+if [ "$PY_OK" -ne 1 ]; then
+    cat <<EOF
+!!! Python 版本过低：$PY_VER，本项目需要 3.8 及以上。
+
+    Ubuntu 18.04 自带 Python 3.6，直接装依赖会报
+    "Could not find a version that satisfies the requirement ... (from versions: none)"。
+
+    解决办法（二选一）：
+
+    A. 装一个新版 Python 并用它执行本脚本：
+         apt-get install -y software-properties-common
+         add-apt-repository -y ppa:deadsnakes/ppa
+         apt-get update
+         apt-get install -y python3.11 python3.11-venv
+         rm -rf venv
+         PYTHON=python3.11 bash deploy.sh
+
+    B. 换成 Ubuntu 22.04 / 24.04，自带 Python 3.10 / 3.12。
+
+    另外注意：venv 已经建过就不能复用，上面的 A 方案里带了 rm -rf venv。
+EOF
+    exit 1
+fi
+if [ "$PY_GOOD" -ne 1 ]; then
+    echo "    ! 提示：$PY_VER 可以运行，但 torch / numpy 等会解析到较旧版本，建议 3.10 及以上"
+fi
 
 # ---------------------------------------------------------------- 依赖
 if [ "$SKIP_DEPS" -eq 0 ]; then
@@ -46,14 +90,56 @@ chmod 600 "$APP_DIR/.env"
 # ---------------------------------------------------------------- Python 环境
 echo ">>> 准备虚拟环境..."
 if [ ! -d "$APP_DIR/venv" ]; then
-    python3 -m venv "$APP_DIR/venv"
+    "$PYTHON" -m venv "$APP_DIR/venv"
 fi
 # shellcheck disable=SC1091
 source "$APP_DIR/venv/bin/activate"
-python -m pip install --upgrade pip -q -i https://pypi.tuna.tsinghua.edu.cn/simple
+
 if [ "$SKIP_DEPS" -eq 0 ]; then
+    echo ">>> 当前 pip 索引配置："
+    pip config list 2>/dev/null | sed 's/^/    /' || true
+    [ -z "$(pip config list 2>/dev/null)" ] && echo "    (无自定义配置，使用官方 PyPI)"
+
     echo ">>> 安装 Python 依赖（含 torch，约 2GB，首次会比较久）..."
-    pip install -q -r "$APP_DIR/requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple
+    pip install --upgrade pip -q || true
+
+    # 候选顺序：显式指定 > 系统配置 > 清华 > 官方
+    candidates=()
+    [ -n "$PIP_INDEX" ] && candidates+=("$PIP_INDEX")
+    candidates+=("")
+    candidates+=("https://pypi.tuna.tsinghua.edu.cn/simple")
+    candidates+=("https://pypi.org/simple")
+
+    install_ok=0
+    for src in "${candidates[@]}"; do
+        label="${src:-系统 pip 配置}"
+        echo ">>> 尝试源：$label"
+        if [ -n "$src" ]; then
+            pip install -r "$APP_DIR/requirements.txt" -i "$src" && install_ok=1 && break
+        else
+            pip install -r "$APP_DIR/requirements.txt" && install_ok=1 && break
+        fi
+        echo "    ! 该源失败，换下一个"
+    done
+
+    if [ "$install_ok" -ne 1 ]; then
+        cat <<'EOF'
+!!! 依赖安装失败，请依次排查：
+
+    1. 看系统配置的索引是否可用（云服务器一般是内网源）：
+         pip config list
+         cat /etc/pip.conf
+
+    2. 直接测这个源能不能通（HEAD 请求常被镜像站拒绝，要用 GET）：
+         curl -s -o /dev/null -w "%{http_code}\n" http://mirrors.cloud.aliyuncs.com/pypi/simple/fastapi/
+
+    3. 需要换源时显式指定（会覆盖系统配置）：
+         sudo PIP_INDEX=https://pypi.org/simple bash deploy.sh
+
+    4. 若报 "from versions: none"，且 Python 是 3.7 及以下，看脚本开头的提示。
+EOF
+        exit 1
+    fi
 fi
 
 # ---------------------------------------------------------------- 模型预热

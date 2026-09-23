@@ -195,6 +195,28 @@ sudo journalctl --vacuum-size=200M
 
 ## 6. 排障
 
+**`from versions: none`**：pip 连得上索引，但认为没有任何版本的包适用于当前
+Python。绝大多数情况是**系统 Python 太老**（Ubuntu 18.04 自带 3.6，
+而 fastapi 全系列要求 ≥3.7）。执行 `python3 --version` 确认，
+然后按脚本开头给出的两条路径之一处理：装新版 Python 后用
+`PYTHON=python3.11 bash deploy.sh` 重新执行，或直接换成 Ubuntu 22.04/24.04。
+
+> 注意：`venv` 目录建过之后不能换 Python 复用，升级 Python 前要先 `rm -rf venv`。
+
+**依赖装不上 / `from versions: none`（Python 版本正常时）**：
+**云服务器不要覆盖 pip 索引**。阿里云 ECS 的 `/etc/pip.conf` 通常已指向内网
+镜像 `mirrors.cloud.aliyuncs.com`，免流量费且更快；显式传 `-i <别的源>`
+会覆盖它，反而可能连不上（实测清华源对部分机房返回 403）。
+`deploy.sh` 默认尊重系统配置，依次尝试：显式指定 → 系统配置 → 清华 → 官方。
+
+排查时注意：`curl -I`（HEAD 请求）常被镜像站拒绝，要测连通性请用 GET：
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://mirrors.cloud.aliyuncs.com/pypi/simple/fastapi/
+```
+
+需要换源时显式指定：`sudo PIP_INDEX=https://pypi.org/simple bash deploy.sh`
+
 **页面打不开**：先 `curl localhost:8001/health` 看后端有没有响应。
 后端只监听 `127.0.0.1`，必须经 nginx 访问。
 
