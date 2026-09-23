@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# 环境变量（含 API Key，切勿提交）
+.env
+
+# 运行时数据
+conversations.json
+uploads/
+data/
+models/
+
+# 重构前的单文件备份
+_legacy_main.py.bak
+*.bak
+
+# 编辑器 / 本地配置
+.claude/
+.vscode/
+.idea/

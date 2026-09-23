@@ -1,0 +1,161 @@
+{
+  "_说明": [
+    "检索评测集：每道题标注「应该命中哪篇文档」。",
+    "expected 是数组，命中其中任意一个就算通过（有些问题确实跨多篇）。",
+    "category=direct 表示用词贴近文档原文；category=colloquial 表示口语化提问，",
+    "后者才是真正考验语义检索的部分，调参时重点看它的分数。",
+    "补充题目直接往下面加，不需要改代码。"
+  ],
+  "cases": [
+    {
+      "category": "direct",
+      "question": "玉米制种田的隔离距离要求是多少？",
+      "expected": ["corn_seed.md"]
+    },
+    {
+      "category": "direct",
+      "question": "棉花全生育期各阶段怎么管理？",
+      "expected": ["cotton_full_cycle.md"]
+    },
+    {
+      "category": "direct",
+      "question": "作物生长模型怎么建立和使用？",
+      "expected": ["crop_models.md"]
+    },
+    {
+      "category": "direct",
+      "question": "滴灌系统怎么设计和维护？",
+      "expected": ["drip_system.md"]
+    },
+    {
+      "category": "direct",
+      "question": "设备故障怎么诊断？",
+      "expected": ["equipment_faults.md"]
+    },
+    {
+      "category": "direct",
+      "question": "水肥一体化氮磷钾怎么配比？",
+      "expected": ["fertigation.md"]
+    },
+    {
+      "category": "direct",
+      "question": "施肥配比有什么标准？",
+      "expected": ["fertilization.md"]
+    },
+    {
+      "category": "direct",
+      "question": "霜冻来临前怎么做好防护？",
+      "expected": ["frost_protection.md"]
+    },
+    {
+      "category": "direct",
+      "question": "新疆特色果树怎么栽培管理？",
+      "expected": ["fruit_trees.md"]
+    },
+    {
+      "category": "direct",
+      "question": "日光温室的环境怎么调控？",
+      "expected": ["greenhouse_basic.md"]
+    },
+    {
+      "category": "direct",
+      "question": "灌溉决策规则是什么？",
+      "expected": ["irrigation_rules.md"]
+    },
+    {
+      "category": "direct",
+      "question": "棉铃虫怎么识别和防治？",
+      "expected": ["pest_detail.md", "pest_disease.md"]
+    },
+    {
+      "category": "direct",
+      "question": "病虫害图谱都收录了哪些内容？",
+      "expected": ["pest_disease.md", "pest_detail.md"]
+    },
+    {
+      "category": "direct",
+      "question": "土壤传感器怎么布设？",
+      "expected": ["smart_sensors.md"]
+    },
+    {
+      "category": "direct",
+      "question": "土壤墒情阈值是多少？",
+      "expected": ["soil_moisture.md"]
+    },
+    {
+      "category": "direct",
+      "question": "盐碱地怎么改良治理？",
+      "expected": ["soil_salinity.md"]
+    },
+    {
+      "category": "direct",
+      "question": "加工番茄怎么栽培？",
+      "expected": ["tomato_processing.md"]
+    },
+    {
+      "category": "direct",
+      "question": "膜下滴灌怎么节水？",
+      "expected": ["water_saving.md"]
+    },
+    {
+      "category": "direct",
+      "question": "气象阈值规则是什么？",
+      "expected": ["weather_thresholds.md"]
+    },
+    {
+      "category": "direct",
+      "question": "冬小麦越冬水怎么管理？",
+      "expected": ["wheat_winter.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "地里干得裂口子了，棉花啥时候该浇水？",
+      "expected": ["irrigation_rules.md", "soil_moisture.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "滴灌带堵住了咋办？",
+      "expected": ["drip_system.md", "equipment_faults.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "大棚晚上太冷，苗都冻着了",
+      "expected": ["greenhouse_basic.md", "frost_protection.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "地太咸了，苗出得不齐怎么办？",
+      "expected": ["soil_salinity.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "想省点水，怎么浇最划算？",
+      "expected": ["water_saving.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "传感器埋多深比较合适？",
+      "expected": ["smart_sensors.md", "soil_moisture.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "预报说明天大降温，要提前做点啥吗？",
+      "expected": ["frost_protection.md", "weather_thresholds.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "水肥一起施的话比例怎么定？",
+      "expected": ["fertigation.md", "fertilization.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "水泵压力上不来是怎么回事？",
+      "expected": ["equipment_faults.md", "drip_system.md"]
+    },
+    {
+      "category": "colloquial",
+      "question": "叶子发黄是不是缺肥了？",
+      "expected": ["fertilization.md", "pest_disease.md", "pest_detail.md"]
+    }
+  ]
+}

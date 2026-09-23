@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>农业知识库 v4</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="container">
+    <button class="menu-toggle" id="menu-toggle">☰</button>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🌾 农业知识库</h2>
+            <div class="sidebar-stats" id="sidebar-stats">📚 加载中...</div>
+            <div class="sidebar-search">
+                <input type="text" id="kb-search" placeholder="搜索知识库...">
+            </div>
+        </div>
+        <div class="kb-list" id="kb-list"><p class="loading-hint">加载中...</p></div>
+        <div class="sidebar-footer">
+            <label for="file-upload" class="upload-btn">📄 上传文档</label>
+            <input type="file" id="file-upload" accept=".txt,.md,.pdf,.docx,.doc" multiple hidden>
+            <button id="clear-chat" class="btn-secondary">🗑️ 清空对话</button>
+            <button id="export-chat" class="btn-secondary">📥 导出对话</button>
+            <a id="about-link" class="about-link">ℹ️ 关于知识库</a>
+        </div>
+    </aside>
+    <main class="chat-area">
+        <div class="chat-header">
+            <h3>💬 智能问答</h3>
+            <div class="header-right">
+                <button id="stats-btn" class="theme-btn" title="统计">📊</button>
+                <button id="theme-toggle" class="theme-btn" title="深色模式">🌙</button>
+                <span id="status" class="status">就绪</span>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message system welcome-msg">
+                <div class="msg-content">
+                    <p>👋 农业知识库 v4 · 20 篇专业文档 · BM25 语义检索</p>
+                    <div class="suggestions" id="suggestions">
+                        <div class="sug-card" data-q="棉花蕾期含水量低于多少需要灌溉？">💧 棉花蕾期灌溉条件</div>
+                        <div class="sug-card" data-q="棉铃虫怎么识别和防治？">🐛 棉铃虫识别与防治</div>
+                        <div class="sug-card" data-q="加工番茄果实膨大期怎么施肥？">🍅 番茄膨大期施肥方案</div>
+                        <div class="sug-card" data-q="滴灌系统压力不足怎么排查？">🔧 滴灌系统故障排查</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <textarea id="user-input" placeholder="输入农业问题..." rows="1"></textarea>
+            <button id="send-btn" class="btn-primary">发送</button>
+            <button id="stop-btn" class="btn-stop" style="display:none">⏹ 停止</button>
+        </div>
+    </main>
+</div>
+<div class="modal-overlay" id="modal-overlay" style="display:none">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modal-title"></h3>
+            <button class="modal-close" id="modal-close">×</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+<div class="stats-overlay" id="stats-overlay" style="display:none">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>📊 系统统计</h3>
+            <button class="modal-close" id="stats-close">×</button>
+        </div>
+        <div class="modal-body" id="stats-body"></div>
+    </div>
+</div>
+<script src="/static/js/app.js?v=5.0"></script>
+</body>
+</html>
