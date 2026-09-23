@@ -195,6 +195,29 @@ sudo journalctl --vacuum-size=200M
 
 ## 6. 排障
 
+**服务起不来，`status=203/EXEC`，日志报 `Failed to locate executable .../venv/bin/uvicorn`**：
+venv 里没有依赖。**`--no-deps` 只能在依赖装好之后用**，否则会把一个空的 venv
+留给 systemd。补装即可：
+
+```bash
+source /opt/agri-kb/venv/bin/activate
+pip install -r /opt/agri-kb/requirements.txt
+sudo systemctl restart agri-kb
+```
+
+> 脚本现在会在**动 systemd 之前**做启动前自检（uvicorn 是否存在、
+> 能否 `import main`），不通过就直接退出且不碰现有服务；
+> 覆盖 unit 文件与 nginx 配置前也会自动备份带时间戳的副本。
+
+**nginx 警告 `conflicting server name "_"`**：`sites-enabled/` 里有另一个站点
+也用了 `server_name _`，nginx 只会生效其中一个，本项目的配置可能被忽略。
+查看并处理：
+
+```bash
+grep -rn "server_name" /etc/nginx/sites-enabled/
+# 停用旧站点： sudo rm /etc/nginx/sites-enabled/那个文件 && sudo systemctl reload nginx
+```
+
 **`from versions: none`**：pip 连得上索引，但认为没有任何版本的包适用于当前
 Python。绝大多数情况是**系统 Python 太老**（Ubuntu 18.04 自带 3.6，
 而 fastapi 全系列要求 ≥3.7）。执行 `python3 --version` 确认，

@@ -150,7 +150,45 @@ if ! python -m app.tools.prefetch_models --check; then
 fi
 
 # ---------------------------------------------------------------- systemd
+echo ">>> 启动前自检..."
+# 关键：必须在动 systemd 之前确认新版本真的能跑起来。
+# 否则 --no-deps 之类的误用会把正在工作的旧服务停掉，变成一次事故。
+if [ ! -x "$APP_DIR/venv/bin/uvicorn" ]; then
+    cat <<EOF
+!!! $APP_DIR/venv/bin/uvicorn 不存在，说明依赖没装全。
+
+    现有服务未被改动，仍在正常运行。
+
+    先补装依赖再执行本脚本（--no-deps 只应在依赖装好之后使用）：
+        source $APP_DIR/venv/bin/activate
+        pip install -r $APP_DIR/requirements.txt
+        deactivate
+        sudo bash deploy.sh --no-deps
+EOF
+    exit 1
+fi
+if ! "$APP_DIR/venv/bin/python" -c "import fastapi, uvicorn" >/dev/null 2>&1; then
+    echo "!!! venv 里缺少 fastapi / uvicorn，依赖安装不完整。"
+    echo "    现有服务未被改动。请先 pip install -r requirements.txt"
+    exit 1
+fi
+"$APP_DIR/venv/bin/python" - <<'PY' || { echo "!!! 应用无法导入，现有服务未被改动。"; exit 1; }
+import sys
+sys.path.insert(0, ".")
+try:
+    import main  # noqa: F401
+except Exception as exc:
+    print("    导入失败：%s" % exc)
+    raise SystemExit(1)
+PY
+echo "    自检通过"
+
 echo ">>> 注册 systemd 服务..."
+# 覆盖前先备份，出问题能对着看
+if [ -f /etc/systemd/system/agri-kb.service ]; then
+    cp /etc/systemd/system/agri-kb.service \
+       "/etc/systemd/system/agri-kb.service.bak.$(date +%Y%m%d%H%M%S)"
+fi
 cat > /etc/systemd/system/agri-kb.service << SVC
 [Unit]
 Description=agri-kb 农业知识库 RAG 问答服务
@@ -177,6 +215,17 @@ SVC
 
 # ---------------------------------------------------------------- nginx
 echo ">>> 配置 nginx..."
+# 同名 server_name 会被 nginx 直接忽略，提前提醒
+CONFLICTS="$(grep -rl 'server_name _;' /etc/nginx/sites-enabled/ 2>/dev/null | grep -v 'agri-kb' || true)"
+if [ -n "$CONFLICTS" ]; then
+    echo "    ! 下列站点也占用了 server_name _，nginx 只会生效其中一个："
+    echo "$CONFLICTS" | sed 's/^/        /'
+    echo "      建议把本项目的 server_name 改成你的域名，或先停用旧站点。"
+fi
+if [ -f /etc/nginx/sites-available/agri-kb ]; then
+    cp /etc/nginx/sites-available/agri-kb \
+       "/etc/nginx/sites-available/agri-kb.bak.$(date +%Y%m%d%H%M%S)"
+fi
 cat > /etc/nginx/sites-available/agri-kb << 'NGX'
 server {
     listen 80;
